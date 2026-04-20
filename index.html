@@ -175,6 +175,11 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);min-height:100vh;overf
 
   <div id="g1-input-hint">Press the key shown on each falling letter!</div>
 
+  <!-- On-screen keyboard -->
+  <div id="g1-keyboard" style="display:none;position:absolute;bottom:0;left:0;right:0;z-index:15;background:rgba(10,10,30,.92);padding:8px 4px 10px;backdrop-filter:blur(6px)">
+    <div id="g1-kb-rows"></div>
+  </div>
+
   <!-- Pause overlay -->
   <div class="pause-overlay" id="g1-pause">
     <div class="pause-box">
@@ -280,6 +285,50 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);min-height:100vh;overf
 </div>
 
 <script>
+// ===== MOBILE DETECT =====
+const isMobile=()=>window.innerWidth<=700||('ontouchstart' in window);
+
+// ===== ON-SCREEN KEYBOARD =====
+const KB_ROWS=[['Q','W','E','R','T','Y','U','I','O','P'],['A','S','D','F','G','H','J','K','L'],['Z','X','C','V','B','N','M','⌫']];
+function buildKeyboard(){
+  const wrap=document.getElementById('g1-kb-rows');wrap.innerHTML='';
+  KB_ROWS.forEach(row=>{
+    const rowEl=document.createElement('div');
+    rowEl.style.cssText='display:flex;justify-content:center;gap:4px;margin-bottom:4px';
+    row.forEach(k=>{
+      const btn=document.createElement('button');
+      const isBS=k==='⌫';
+      btn.textContent=k;
+      btn.style.cssText=`min-width:${isBS?52:34}px;height:44px;border:none;border-radius:8px;background:${isBS?'#ff4d6d':'rgba(255,255,255,.15)'};color:#fff;font-family:'Nunito',sans-serif;font-weight:700;font-size:${isBS?18:16}px;cursor:pointer;transition:transform .1s,background .1s;-webkit-tap-highlight-color:transparent`;
+      btn.addEventListener('touchstart',e=>{e.preventDefault();btn.style.background=isBS?'#c0392b':'rgba(255,255,255,.35)';btn.style.transform='scale(.9)';handleKbKey(k);},{passive:false});
+      btn.addEventListener('touchend',e=>{e.preventDefault();btn.style.background=isBS?'#ff4d6d':'rgba(255,255,255,.15)';btn.style.transform='scale(1)';},{passive:false});
+      btn.addEventListener('mousedown',e=>{e.preventDefault();handleKbKey(k);});
+      rowEl.appendChild(btn);
+    });
+    wrap.appendChild(rowEl);
+  });
+}
+function handleKbKey(k){
+  if(!g1Running||g1Paused)return;
+  if(k==='⌫')return;
+  const key=k.toUpperCase();
+  for(let i=g1Letters.length-1;i>=0;i--){
+    const l=g1Letters[i];if(l.hit)continue;
+    if(l.text===key||l.text[0]===key){
+      l.hit=true;l.vy=0;
+      g1Score+=l.text.length*10*(g1Opts.mode==='speed'?2:1);
+      document.getElementById('g1-score').textContent=g1Score;
+      pop();return;
+    }
+  }
+  wrong();
+}
+function showMobileKeyboard(show){
+  const kb=document.getElementById('g1-keyboard');
+  kb.style.display=show?'block':'none';
+  document.getElementById('g1-input-hint').style.display=show?'none':'block';
+}
+
 // ===== AUDIO =====
 const AC=typeof AudioContext!=='undefined'?new AudioContext():null;
 function beep(freq,dur,type='sine',vol=0.25){
@@ -341,6 +390,7 @@ function startG1(){
     g1TimerInt=setInterval(()=>{if(g1Paused)return;g1TimeLeft--;document.getElementById('g1-timer').textContent=g1TimeLeft;if(g1TimeLeft<=0)endG1('time');},1000);
   } else ts.style.display='none';
   document.addEventListener('keydown',g1KeyHandler);
+  if(isMobile()){buildKeyboard();showMobileKeyboard(true);}else{showMobileKeyboard(false);}
   g1Loop();
 }
 
@@ -444,6 +494,7 @@ function endG1(reason){
   document.removeEventListener('keydown',g1KeyHandler);
   document.getElementById('g1-ctrl').style.display='none';
   document.getElementById('g1-input-hint').style.display='none';
+  showMobileKeyboard(false);
   const go=document.getElementById('g1-gameover');go.style.display='flex';
   document.getElementById('g1-over-title').textContent=reason==='time'?'⏰ Time\'s Up!':'💔 Game Over!';
   document.getElementById('g1-final').textContent=g1Score;
