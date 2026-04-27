@@ -144,6 +144,8 @@ body{font-family:'Nunito',sans-serif;background:#fff9f0;width:100vw;height:100vh
 .cat-btn.active{border-color:var(--g);background:#e8f5e9}
 .g4-done-ov{position:absolute;inset:0;background:rgba(0,0,0,.8);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:25;padding:16px;text-align:center}
 .g4-done-ov h2{font-size:clamp(20px,5.5vw,30px);font-weight:900;color:var(--y)}
+.g4-gone {display:none;}
+.g4-gone.show {display:flex;}
 </style>
 </head>
 <body>
@@ -439,11 +441,17 @@ body{font-family:'Nunito',sans-serif;background:#fff9f0;width:100vw;height:100vh
     </div>
   </div>
   <div class="g4-done-ov" id="g4-done">
-    <h2>🎊 All Words Done!</h2>
-    <div style="font-size:clamp(36px,10vw,52px)">⭐⭐⭐</div>
+    <h2 id="all-words" class="g4-gone">🎊 All Words Done!</h2>
+    <h2 id="partial-words" class="g4-gone">👏 Well Done!</h2>
+    <h2 id="poor-words" class="g4-gone">😅 Keep Going!</h2>
+    <h2 id="very-poor-words" class="g4-gone">But you can do it!</h2>
+    <div style="font-size:clamp(36px,10vw,52px)" id="g4-great" class="great g4-gone">⭐⭐⭐</div>
+    <div style="font-size:clamp(36px,10vw,52px)" id="g4-partial" class="partial g4-gone">⭐⭐</div>
+    <div style="font-size:clamp(36px,10vw,52px)" id="g4-poor" class="poor g4-gone">⭐</div>
+    <div style="font-size:clamp(36px,10vw,52px)" id="g4-very-poor" class="very-poor g4-gone">😭😭😭</div>
     <div id="g4-done-msg" style="color:#eee;font-size:14px"></div>
     <div style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center">
-      <button class="btn btn-g" onclick="startG4()">🔄 Again</button>
+      <button class="btn btn-g" onclick="startG4(false)">🔄 Again</button>
       <button class="btn btn-y" onclick="nav('pg-g4-setup','back')">⚙️ Settings</button>
       <button class="btn btn-gray" onclick="goHome()">🏠 Home</button>
     </div>
@@ -506,14 +514,14 @@ function clamp(mn,v,mx){return Math.max(mn,Math.min(mx,v));}
 let g1={letters:[],score:0,lives:3,raf:null,tint:null,tLeft:30,run:false,pause:false,frame:0,spawn:0,sm:1};
 
 function showG1Setup(){stopG1();showKb('g1-kb',false);nav('pg-g1-setup','back');}
-function startG1(){
-  nav('pg-g1-play');
+function startG1(setNav = true){
+  if(setNav) nav('pg-g1-play');
   const cv=document.getElementById('g1-canvas');cv.width=innerWidth;cv.height=innerHeight;
   g1={letters:[],score:0,lives:3,raf:null,tint:null,tLeft:30,run:true,pause:false,frame:0,spawn:0,sm:1};
   g1.sm={slow:.6,normal:1,fast:1.7}[g1Opts.spd]*(g1Opts.age==='little'?.65:1);
   el('g1-score').textContent='0';el('g1-lives').textContent='❤️❤️❤️';
   el('g1-over').style.display='none';el('g1-pov').classList.remove('show');el('g1-pbtn').textContent='⏸';
-  buildAlpha();buildKb('g1-kbr',g1KbHandler);
+  buildKb('g1-kbr',g1KbHandler);
   const mob=isMob();showKb('g1-kb',mob);el('g1-hint').style.display=mob?'none':'block';
   const ts=el('g1-tspan');clearInterval(g1.tint);
   if(g1Opts.mode==='timed'){ts.style.display='';el('g1-timer').textContent=30;
@@ -521,7 +529,7 @@ function startG1(){
   } else ts.style.display='none';
   document.addEventListener('keydown',g1Key);g1Loop();
 }
-function restartG1(){stopG1();startG1();}
+function restartG1(){stopG1();setTimeout(()=>startG1(false),300);}
 function pauseG1(){if(!g1.run)return;if(g1.pause){resumeG1();return;}g1.pause=true;el('g1-pbtn').textContent='▶';el('g1-pov').classList.add('show');}
 function resumeG1(){g1.pause=false;el('g1-pbtn').textContent='⏸';el('g1-pov').classList.remove('show');g1Loop();}
 function stopG1(){g1.run=false;g1.pause=false;clearInterval(g1.tint);cancelAnimationFrame(g1.raf);document.removeEventListener('keydown',g1Key);showKb('g1-kb',false);}
@@ -582,9 +590,9 @@ function renderStages(){
     if(i<=g2.smax)b.onclick=()=>startG2(i);g.appendChild(b);}
 }
 function showG2Setup(){stopG2();nav('pg-g2-setup','back');el('g2-pov').classList.remove('show');renderStages();}
-function startG2(stage){
+function startG2(stage,setNav = true){
   stopG2();g2.stage=stage;g2.run=true;g2.pause=false;
-  nav('pg-g2-play');
+  if(setNav) nav('pg-g2-play');
   el('g2-rov').style.display='none';el('g2-pov').classList.remove('show');el('g2-pbtn').textContent='⏸';
   el('g2-slbl').textContent=stage;
   const lb={easy:'😊 Easy',med:'😤 Medium',hard:'😈 Hard'}[g2.diff];
@@ -603,7 +611,7 @@ function startG2(stage){
     if(g2.tLeft<=0)endG2(false);},1000);
   document.addEventListener('keydown',g2Key);
 }
-function replayStage(){startG2(g2.stage);}
+function replayStage(){startG2(g2.stage, false);}
 function nextStage(){if(g2.stage<10)startG2(g2.stage+1);}
 function pauseG2(){if(!g2.run)return;if(g2.pause){resumeG2();return;}g2.pause=true;el('g2-pbtn').textContent='▶';el('g2-pov').classList.add('show');}
 function resumeG2(){g2.pause=false;el('g2-pbtn').textContent='⏸';el('g2-pov').classList.remove('show');}
@@ -664,8 +672,8 @@ function buildSeq(dir){
   return [...Array(26)].map((_,i)=>String.fromCharCode(65+i)).concat([...Array(26)].map((_,i)=>String.fromCharCode(90-i)));
 }
 
-function startG3(){
-  nav('pg-g3-play');
+function startG3(setNav = true){
+  if(setNav) nav('pg-g3-play');
   g3={run:true,pause:false,dir:g3Opt,idx:0,seq:buildSeq(g3Opt),errors:0,startT:Date.now()};
   el('g3-done').style.display='none';el('g3-pov').classList.remove('show');el('g3-pbtn').textContent='⏸';
   const isDesc=g3Opt==='desc';
@@ -674,7 +682,7 @@ function startG3(){
   buildG3Row();buildKb('g3-kbr',g3KbHandler);showKb('g3-kb',isMob());
   updateG3UI();document.addEventListener('keydown',g3Key);
 }
-function restartG3(){stopG3();startG3();}
+function restartG3(){stopG3();startG3(false);}
 function pauseG3(){if(!g3.run)return;if(g3.pause){resumeG3();return;}g3.pause=true;el('g3-pbtn').textContent='▶';el('g3-pov').classList.add('show');}
 function resumeG3(){g3.pause=false;el('g3-pbtn').textContent='⏸';el('g3-pov').classList.remove('show');}
 function stopG3(){g3.run=false;g3.pause=false;document.removeEventListener('keydown',g3Key);showKb('g3-kb',false);}
@@ -753,8 +761,8 @@ function buildCatGrid(){
   });
 }
 
-function startG4(){
-  nav('pg-g4-play');
+function startG4(setNav = true){
+  if(setNav) nav('pg-g4-play');
   const pool=CATS[g4SelCat].filter(w=>{const word=w.split(' ')[1];return g1Opts.wdiff==='easy'?word.length<=4:word.length>=5;});
   const src=pool.length>=10?pool:[...CATS[g4SelCat]];
   const shuffled=[...src].sort(()=>Math.random()-.5);
@@ -764,9 +772,18 @@ function startG4(){
   el('g4-cat-lbl').textContent=g4SelCat;el('g4-score').textContent='0';el('g4-streak').textContent='0';
   buildKb('g4-kbr',g4KbHandler);showKb('g4-kb',isMob());
   loadWord();document.addEventListener('keydown',g4Key);
+  el('g4-great').classList.remove('show');
+  el('g4-very-poor').classList.remove('show');
+  el('g4-poor').classList.remove('show');
+  el('g4-partial').classList.remove('show');
+  el('all-words').classList.remove('show');
+  el('very-poor-words').classList.remove('show');
+  el('poor-words').classList.remove('show');
+  el('partial-words').classList.remove('show');
 }
 function loadWord(){
-  if(g4.widx>=g4.words.length){endG4();return;}
+  if(g4.widx>=g4.words.length && g4.streak > 0){endG4();return;}
+  if(g4.widx>=g4.words.length && g4.streak == 0){endG4();return;}
   const parts=g4.words[g4.widx].split(' ');
   const emoji=parts[0],word=parts[1];
   g4.cidx=0;el('g4-emoji').textContent=emoji;
@@ -800,6 +817,10 @@ function g4Key(e){if(!g4.run||g4.pause)return;if(e.key==='Escape'){pauseG4();ret
 function endG4(){
   g4.run=false;document.removeEventListener('keydown',g4Key);
   el('g4-done').style.display='flex';el('g4-done-msg').textContent=`You scored ${g4.score} points! 🎊`;cheer();
+  if (g4.streak == g4.totalWords) {el('g4-great').classList.add('show');el('all-words').classList.add('show')};
+  if (g4.streak == 0) {el('g4-very-poor').classList.add('show');el('very-poor-words').classList.add('show');}
+  if (g4.streak > 0 && g4.streak < 5 && g4.streak < g4.totalWords ) {el('g4-poor').classList.add('show');el('poor-words').classList.add('show');}
+  if (g4.streak > 0 && g4.streak >= 5 && g4.streak < g4.totalWords ) {el('g4-partial').classList.add('show');el('partial-words').classList.add('show');}
 }
 
 // HELPERS
