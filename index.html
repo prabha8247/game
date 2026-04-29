@@ -612,7 +612,7 @@ function startG2(stage,setNav = true){
   document.addEventListener('keydown',g2Key);
 }
 function replayStage(){startG2(g2.stage, false);}
-function nextStage(){if(g2.stage<10)startG2(g2.stage+1);}
+function nextStage(){if(g2.stage<10)startG2(g2.stage+1, false);}
 function pauseG2(){if(!g2.run)return;if(g2.pause){resumeG2();return;}g2.pause=true;el('g2-pbtn').textContent='▶';el('g2-pov').classList.add('show');}
 function resumeG2(){g2.pause=false;el('g2-pbtn').textContent='⏸';el('g2-pov').classList.remove('show');}
 function stopG2(){g2.run=false;g2.pause=false;clearInterval(g2.tint);document.removeEventListener('keydown',g2Key);}
